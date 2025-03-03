@@ -12,9 +12,14 @@ root_dir = os.path.abspath(os.path.join(current_dir, ".."))
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
-# Importar la base de datos y sobrescribir la conexión
+# Sobrescribir la conexión a la base de datos
 from app.config.database import database
 from tests.dummies import DummyDatabase
+
+@pytest.fixture(autouse=True)
+def reset_dummy_db():
+    # Reinicia la base de datos dummy antes de cada test
+    database.db = DummyDatabase()
 
 async def fake_connect():
     print("TESTING mode: using DummyDatabase.")

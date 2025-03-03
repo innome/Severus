@@ -32,11 +32,14 @@ class DummyCollection:
         self.docs = []
 
     async def insert_one(self, doc: dict):
+        # Si no hay _id, asignarlo (por ejemplo, usando el número de documento)
+        if "_id" not in doc:
+            doc["_id"] = str(len(self.docs) + 1)
         self.docs.append(doc)
         class Result:
             def __init__(self, inserted_id):
                 self.inserted_id = inserted_id
-        return Result(inserted_id=str(len(self.docs)))
+        return Result(inserted_id=doc["_id"])
 
     def find(self, query: dict = None):
         if query:
@@ -64,6 +67,27 @@ class DummyCollection:
             if match:
                 return doc
         return None
+    
+    async def update_one(self, query: dict, update: dict):
+        # Implementación muy simple: buscar el primer doc que coincida y actualizarlo
+        modified_count = 0
+        for idx, doc in enumerate(self.docs):
+            match = True
+            for key, value in query.items():
+                if doc.get(key) != value:
+                    match = False
+                    break
+            if match:
+                # Se asume que update es {"$set": { ... }}
+                for k, v in update.get("$set", {}).items():
+                    self.docs[idx][k] = v
+                modified_count = 1
+                break
+        class Result:
+            def __init__(self, modified_count):
+                self.modified_count = modified_count
+        return Result(modified_count)
+
 
 
 class DummyDatabase:
