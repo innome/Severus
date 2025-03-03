@@ -42,14 +42,23 @@ jobs:
         with:
           name: coverage-report
 
+      - name: List all files in the runner
+        run: ls -R
+
+      - name: Check if coverage.xml exists
+        run: ls -lah coverage.xml || echo "coverage.xml NOT FOUND"
+
       - name: Publish Detailed Coverage Summary
         run: |
           echo "## Detailed Coverage Report" >> $GITHUB_STEP_SUMMARY
-          python - <<'EOF' >> $GITHUB_STEP_SUMMARY
+          python <<EOF >> $GITHUB_STEP_SUMMARY
           import xml.etree.ElementTree as ET
           import os
 
           def get_missing_lines():
+              if not os.path.exists('coverage.xml'):
+                  print("Error: coverage.xml not found.")
+                  return {}
               tree = ET.parse('coverage.xml')
               root = tree.getroot()
               files_missing = {}
@@ -69,6 +78,9 @@ jobs:
               return files_missing
 
           def highlight_file(filename, missing_lines):
+              if not os.path.exists(filename):
+                  return f"Error: File '{filename}' does not exist in the current directory."
+
               try:
                   with open(filename, "r", encoding="utf-8") as f:
                       lines = f.readlines()
@@ -113,25 +125,3 @@ jobs:
 
           print(summary)
           EOF
-
-
-
-  # deploy:
-  #   runs-on: ubuntu-latest
-  #   needs: build
-  #   steps:
-  #     - name: Checkout del código
-  #       uses: actions/checkout@v3
-
-  #     - name: Configurar Python y entorno virtual
-  #       run: |
-  #         python -m venv venv
-  #         source venv/bin/activate
-  #         python -m pip install --upgrade pip
-  #         pip install -r requirements.txt
-
-  #     - name: Desplegar a Staging (Ejemplo)
-  #       run: |
-  #         source venv/bin/activate
-  #         echo "Desplegando la aplicación..."
-  #         uvicorn main:app --reload
