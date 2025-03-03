@@ -23,7 +23,7 @@ jobs:
 
       - name: Ejecutar tests y generar reporte de coverage
         run: |
-          pytest tests --disable-warnings --cov=. --cov-report=xml:coverage.xml
+          pytest --disable-warnings --cov=. --cov-report=xml:coverage.xml
 
       - name: Subir reporte de coverage como artifact
         uses: actions/upload-artifact@v4
