@@ -25,14 +25,11 @@ jobs:
         run: |
           pytest --disable-warnings --cov=. --cov-report=xml:coverage.xml
 
-      - name: Subir reporte de coverage como artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage.xml
+      - name: Mostrar reporte de cobertura
+        run: |
+          echo "Contenido del archivo coverage.xml:"
+          cat coverage.xml
 
-      - name: Subir reporte a Codecov
-        uses: codecov/codecov-action@v3
 
   # deploy:
   #   runs-on: ubuntu-latest
