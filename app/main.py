@@ -13,7 +13,7 @@ from controllers.tributaria_versionada_controller import router as tributaria_ro
 from controllers.audit_controller import router as audit_router
 
 # Importa la función para configurar CORS
-from middlewares.cors import setup_cors
+from middlewares.cors import setup_cors, setup_global_exception_handler
 
 def create_app() -> FastAPI:
     """
@@ -23,6 +23,7 @@ def create_app() -> FastAPI:
 
     # Configurar CORS
     setup_cors(app)
+    setup_global_exception_handler(app)
     # Eventos de inicio y cierre
     @app.on_event("startup")
     async def startup():
