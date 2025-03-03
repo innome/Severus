@@ -1,0 +1,22 @@
+name: Coverage Report
+
+on:
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types:
+      - completed
+
+jobs:
+  show-coverage:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Descargar artifact de coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+
+      - name: Mostrar reporte de coverage
+        run: |
+          echo "Contenido de coverage.xml:"
+          cat coverage.xml
