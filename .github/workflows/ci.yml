@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline with Coverage Summary
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
 
 jobs:
   build:
+    name: Run Tests & Generate Coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout del código
@@ -25,10 +26,29 @@ jobs:
         run: |
           pytest --disable-warnings --cov=. --cov-report=xml:coverage.xml
 
-      - name: Mostrar reporte de cobertura
+      - name: Subir reporte de coverage como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  coverage:
+    name: Publish Coverage Summary
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Descargar artifact de coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+
+      - name: Publicar resumen de cobertura en Job Summary
         run: |
-          echo "Contenido del archivo coverage.xml:"
-          cat coverage.xml
+          echo "## Resumen de Cobertura" >> $GITHUB_STEP_SUMMARY
+          python -c "import xml.etree.ElementTree as ET; \
+                     root = ET.parse('coverage.xml').getroot(); \
+                     print('**Line Coverage:** {:.2%}'.format(float(root.attrib.get('line-rate', 0))))" >> $GITHUB_STEP_SUMMARY
+
 
 
   # deploy:
