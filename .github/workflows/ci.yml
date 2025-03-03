@@ -24,7 +24,7 @@ jobs:
 
       - name: Run tests and generate coverage report
         run: |
-          pytest --disable-warnings --cov=. --cov-report=xml:coverage.xml
+          python -m pytest tests --disable-warnings --cov=. --cov-report=xml:coverage.xml
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
@@ -33,7 +33,7 @@ jobs:
           path: coverage.xml
 
   coverage:
-    name: Publish Coverage Summary and Missing Lines
+    name: Publish Detailed Coverage Report
     runs-on: ubuntu-latest
     needs: build
     steps:
@@ -42,40 +42,81 @@ jobs:
         with:
           name: coverage-report
 
-      - name: Publish Overall Coverage Summary
+      - name: Publish Detailed Coverage Summary
         run: |
-          echo "## Overall Coverage" >> $GITHUB_STEP_SUMMARY
-          python -c "import xml.etree.ElementTree as ET; \
-                     root = ET.parse('coverage.xml').getroot(); \
-                     print('**Line Coverage:** {:.2%}'.format(float(root.attrib.get('line-rate', 0))))" >> $GITHUB_STEP_SUMMARY
-
-      - name: Publish Missing Lines Summary
-        run: |
-          echo "## Missing Coverage Details" >> $GITHUB_STEP_SUMMARY
+          echo "## Detailed Coverage Report" >> $GITHUB_STEP_SUMMARY
           python - <<'EOF' >> $GITHUB_STEP_SUMMARY
           import xml.etree.ElementTree as ET
-          tree = ET.parse('coverage.xml')
-          root = tree.getroot()
-          files_missing = {}
-          # Se asume que la estructura es: <coverage> -> <packages> -> <package> -> <classes> -> <class filename="..."> -> <lines> -> <line number="..." hits="...">
-          for cls in root.findall(".//class"):
-              filename = cls.get("filename")
-              if not filename:
-                  continue
-              missing = []
-              for line in cls.findall("./lines/line"):
-                  if int(line.get("hits", 0)) == 0:
-                      missing.append(line.get("number"))
-              if missing:
-                  files_missing[filename] = missing
+          import os
 
-          if files_missing:
-              for file, lines in files_missing.items():
-                  print(f"**File:** {file}")
-                  print(f"Missing lines: {', '.join(lines)}\n")
-          else:
-              print("All files are fully covered.")
-          EOF
+          def get_missing_lines():
+              tree = ET.parse('coverage.xml')
+              root = tree.getroot()
+              files_missing = {}
+              # Se asume que la estructura es la estándar de cobertura (Cobertura XML)
+              for cls in root.findall(".//class"):
+                  filename = cls.get("filename")
+                  if not filename:
+                      continue
+                  missing = []
+                  for line in cls.findall("./lines/line"):
+                      try:
+                          if int(line.get("hits", "0")) == 0:
+                              missing.append(int(line.get("number")))
+                      except Exception:
+                          continue
+                  if missing:
+                      files_missing[filename] = sorted(set(missing))
+              return files_missing
+
+          def highlight_file(filename, missing_lines):
+              try:
+                  with open(filename, "r", encoding="utf-8") as f:
+                      lines = f.readlines()
+              except Exception as e:
+                  return f"Error reading file {filename}: {e}"
+              output = []
+              context_radius = 1
+              # Agrupar líneas faltantes consecutivas
+              groups = []
+              current_group = []
+              for line in missing_lines:
+                  if not current_group:
+                      current_group = [line]
+                  elif line == current_group[-1] + 1:
+                      current_group.append(line)
+                  else:
+                      groups.append(current_group)
+                      current_group = [line]
+              if current_group:
+                  groups.append(current_group)
+              for group in groups:
+                  start = max(group[0] - context_radius, 1)
+                  end = min(group[-1] + context_radius, len(lines))
+                  for i in range(start, end + 1):
+                      code = lines[i-1].rstrip().replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                      if i in group:
+                          # Línea sin cobertura: rojo
+                        output.append(f'<span style="color: red;">{i:4d}: {code}</span>')
+                        else:
+                        # Línea con cobertura: verde
+                        output.append(f'<span style="color: green;">{i:4d}: {code}</span>')
+                        output.append("")  # línea en blanco entre grupos
+                        return "\n".join(output)
+
+                        missing = get_missing_lines()
+                        summary = ""
+                        if missing:
+                        for filename, lines_missing in missing.items():
+                        summary += f"<h3>File: {filename}</h3>\n"
+                        summary += f"<p>Missing lines: {', '.join(map(str, lines_missing))}</p>\n"
+                        snippet = highlight_file(filename, lines_missing)
+                        summary += f"<pre>{snippet}</pre>\n"
+                        else:
+                        summary = "All files are fully covered."
+
+                        print(summary)
+                        EOF
 
 
 
