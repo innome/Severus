@@ -53,7 +53,6 @@ jobs:
               tree = ET.parse('coverage.xml')
               root = tree.getroot()
               files_missing = {}
-              # Se asume que la estructura es la estándar de cobertura (Cobertura XML)
               for cls in root.findall(".//class"):
                   filename = cls.get("filename")
                   if not filename:
@@ -77,7 +76,6 @@ jobs:
                   return f"Error reading file {filename}: {e}"
               output = []
               context_radius = 1
-              # Agrupar líneas faltantes consecutivas
               groups = []
               current_group = []
               for line in missing_lines:
@@ -96,27 +94,25 @@ jobs:
                   for i in range(start, end + 1):
                       code = lines[i-1].rstrip().replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
                       if i in group:
-                          # Línea sin cobertura: rojo
-                        output.append(f'<span style="color: red;">{i:4d}: {code}</span>')
-                        else:
-                        # Línea con cobertura: verde
-                        output.append(f'<span style="color: green;">{i:4d}: {code}</span>')
-                        output.append("")  # línea en blanco entre grupos
-                        return "\n".join(output)
+                          output.append(f'<span style="color: red;">{i:4d}: {code}</span>')
+                      else:
+                          output.append(f'<span style="color: green;">{i:4d}: {code}</span>')
+                  output.append("")
+              return "\\n".join(output)
 
-                        missing = get_missing_lines()
-                        summary = ""
-                        if missing:
-                        for filename, lines_missing in missing.items():
-                        summary += f"<h3>File: {filename}</h3>\n"
-                        summary += f"<p>Missing lines: {', '.join(map(str, lines_missing))}</p>\n"
-                        snippet = highlight_file(filename, lines_missing)
-                        summary += f"<pre>{snippet}</pre>\n"
-                        else:
-                        summary = "All files are fully covered."
+          missing = get_missing_lines()
+          summary = ""
+          if missing:
+              for filename, lines_missing in missing.items():
+                  summary += f"<h3>File: {filename}</h3>\\n"
+                  summary += f"<p>Missing lines: {', '.join(map(str, lines_missing))}</p>\\n"
+                  snippet = highlight_file(filename, lines_missing)
+                  summary += f"<pre>{snippet}</pre>\\n"
+          else:
+              summary = "All files are fully covered."
 
-                        print(summary)
-                        EOF
+          print(summary)
+          EOF
 
 
 
