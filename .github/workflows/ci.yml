@@ -21,9 +21,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Ejecutar tests
+      - name: Ejecutar tests y obtener cobertura
         run: |
-          pytest --disable-warnings
+          pytest --disable-warnings --cov=. --cov-report=xml
+
+      - name: Subir reporte a Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}  # Solo necesario si el repo es privado
+
 
   # deploy:
   #   runs-on: ubuntu-latest
