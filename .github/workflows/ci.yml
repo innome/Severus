@@ -21,9 +21,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Ejecutar tests y obtener cobertura
+      - name: Ejecutar tests y generar reporte de coverage
         run: |
-          pytest --disable-warnings --cov=. --cov-report=xml
+          pytest tests --disable-warnings --cov=. --cov-report=xml:coverage.xml
+
+      - name: Subir reporte de coverage como artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage.xml
 
       - name: Subir reporte a Codecov
         uses: codecov/codecov-action@v3
