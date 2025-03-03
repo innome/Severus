@@ -1,26 +1,25 @@
-# name: Backport to main
+name: Backport to main
+on:
+  push:
+    branches:
+      - develop
 
-# on:
-#   push:
-#     branches:
-#       - develop
+jobs:
+  backport:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-# jobs:
-#   backport:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout repository
-#         uses: actions/checkout@v3
-#         with:
-#           token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-#       - name: Configure Git
-#         run: |
-#           git config user.name "github-actions[bot]"
-#           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-#       - name: Merge develop into main
-#         run: |
-#           git checkout main
-#           git merge develop --no-ff -m "Auto backport: Merge develop into main"
-#           git push origin main
+      - name: Merge develop into main
+        run: |
+          git checkout main
+          git merge develop --no-ff -m "Auto backport: Merge develop into main"
+          git push origin main
